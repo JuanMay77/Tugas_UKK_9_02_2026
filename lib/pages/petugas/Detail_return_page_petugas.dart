@@ -23,11 +23,22 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
   final overdueController = TextEditingController(text: '0');
   final feeController = TextEditingController(text: '0');
 
-  String condition = 'Good';
+  static const int dendaPerHari = 50000;
+
+  @override
+  void initState() {
+    super.initState();
+
+    overdueController.addListener(() {
+      final days = int.tryParse(overdueController.text) ?? 0;
+      final total = days * dendaPerHari;
+      feeController.text = total.toString();
+    });
+  }
 
   Future<void> _submitReturn() async {
     final int overdueDays = int.tryParse(overdueController.text) ?? 0;
-    final int fee = int.tryParse(feeController.text) ?? 0;
+    final int fee = overdueDays * dendaPerHari;
 
     try {
       final newStatus = overdueDays > 0 ? 'overdue' : 'returned';
@@ -46,7 +57,6 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
             'Status': newStatus,
             'Terlambat': overdueDays,
             'Denda': fee,
-            'Kondisi': condition,
             'TanggalKembali': DateTime.now().toIso8601String().substring(0, 10),
           })
           .eq('Peminjaman_ID', widget.loan['Peminjaman_ID']);
@@ -74,113 +84,51 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
   }
 
   @override
-  void initState() {
-    super.initState();
-
-    overdueController.text = widget.returnData?.toString() ?? '0';
-
-    feeController.text = widget.returnData?.toString() ?? '0';
-
-    condition = widget.returnData?.toString() ?? 'Good';
-  }
-
-  @override
   Widget build(BuildContext context) {
     final loan = widget.loan;
-    final bool isFinished =
-        widget.returnData == 'returned' ||
-        widget.returnData == 'overdue';
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildAppBar(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    _field('Name', loan['UserPeminjam']),
-                    _field('Product', loan['NamaAlat']),
-                    _field('Amount', loan['BanyakBarang'].toString()),
-                    _field('Loan Date', loan['TanggalPinjam']),
-                    _field('Return Date', loan['TanggalKembali']),
+                    _fieldCard('Name', loan['UserPeminjam']),
+                    _fieldCard('Product', loan['NamaAlat']),
+                    _fieldCard('Amount', loan['BanyakBarang'].toString()),
+                    _fieldCard('Loan Date', loan['TanggalPinjam']),
+                    _fieldCard('Return Date', loan['TanggalKembali'] ?? '-'),
 
-                    _inputField(
-                      'Overdue',
-                      overdueController,
-                      enabled: !isFinished,
-                    ),
-                    _inputField('Fee', feeController, enabled: !isFinished),
+                    _inputCard('Overdue (Days)', overdueController),
+                    _inputCard('Fee (Auto)', feeController, enabled: false),
 
-                    // DROPDOWN KONDISI
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text('Condition'),
-                    ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: condition,
-                      items: const [
-                        DropdownMenuItem(value: 'Good', child: Text('Good')),
-                        DropdownMenuItem(
-                          value: 'Damaged',
-                          child: Text('Damaged'),
-                        ),
-                        DropdownMenuItem(value: 'Lost', child: Text('Lost')),
-                      ],
-                      onChanged: isFinished
-                          ? null
-                          : (val) {
-                              setState(() => condition = val!);
-                            },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 28),
 
-                    const SizedBox(height: 24),
-
-                    if (!isFinished)
-                      SizedBox(
-                        width: 140,
-                        height: 36,
-                        child: ElevatedButton(
-                          onPressed: _submitReturn,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
+                    SizedBox(
+                      width: 160,
+                      height: 42,
+                      child: ElevatedButton(
+                        onPressed: _submitReturn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(22),
                           ),
-                          child: const Text(
-                            'Submit',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          elevation: 6,
                         ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.green),
-                        ),
-                        child: Text(
-                          'Return already processed (${loan['Status']})',
-                          style: const TextStyle(
-                            color: Colors.green,
+                        child: const Text(
+                          'Submit Return',
+                          style: TextStyle(
+                            color: Colors.white,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -191,60 +139,91 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+  // ================= UI COMPONENTS =================
+
+  Widget _buildAppBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
         ),
-        const Expanded(
-          child: Center(
-            child: Text(
-              'Detail Return',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          ),
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Detail Return',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 40),
-      ],
-    );
-  }
-
-  Widget _field(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
-        controller: TextEditingController(text: value),
-        enabled: false,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+          const SizedBox(width: 48),
+        ],
       ),
     );
   }
 
-  Widget _inputField(
+  Widget _fieldCard(String label, String value) {
+    return _baseCard(
+      child: TextField(
+        controller: TextEditingController(text: value),
+        enabled: false,
+        decoration: InputDecoration(labelText: label, border: InputBorder.none),
+      ),
+    );
+  }
+
+  Widget _inputCard(
     String label,
     TextEditingController controller, {
     bool enabled = true,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+    return _baseCard(
       child: TextField(
         controller: controller,
         enabled: enabled,
         keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+        decoration: InputDecoration(labelText: label, border: InputBorder.none),
       ),
+    );
+  }
+
+  Widget _baseCard({required Widget child}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }

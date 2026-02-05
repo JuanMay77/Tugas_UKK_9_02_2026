@@ -12,15 +12,25 @@ class ReturnManagementPage extends StatefulWidget {
 
 class _ReturnManagementPageState extends State<ReturnManagementPage> {
   final supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
+  String searchQuery = '';
 
   String selectedTab = 'waiting';
 
   Future<List<dynamic>> _fetchReturns() async {
-    return await supabase
+    final res = await supabase
         .from('pengembalian_barang')
         .select('*, peminjaman_barang(*)')
         .eq('Status', selectedTab)
         .order('created_at', ascending: false);
+
+    if (searchQuery.isEmpty) return res;
+
+    return res.where((item) {
+      final loan = item['peminjaman_barang'];
+      final name = loan?['NamaUser']?.toString().toLowerCase() ?? '';
+      return name.contains(searchQuery.toLowerCase());
+    }).toList();
   }
 
   @override
@@ -29,10 +39,91 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(),
-            _buildSearch(),
-            _buildTabs(),
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Return Management',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
 
+            const SizedBox(height: 12),
+
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Tabs Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  _buildTab('waiting', 'Waiting'),
+                  const SizedBox(width: 12),
+                  _buildTab('returned', 'Returned'),
+                  const SizedBox(width: 12),
+                  _buildTab('overdue', 'Overdue'),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Returns List
             Expanded(
               child: FutureBuilder<List<dynamic>>(
                 future: _fetchReturns(),
@@ -43,15 +134,20 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
 
                   final data = snapshot.data!;
                   if (data.isEmpty) {
-                    return const Center(child: Text('No data'));
+                    return const Center(
+                      child: Text(
+                        'No returns found',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    );
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: data.length,
                     itemBuilder: (context, index) {
                       final item = data[index];
-                      return _returnCard(item);
+                      return _buildReturnCard(item);
                     },
                   );
                 },
@@ -63,96 +159,29 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          SizedBox(height: 8),
-          Text(
-            'Return Management',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w900,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          _tabBtn('waiting', 'Waiting'),
-          _tabBtn('returned', 'Returned'),
-          _tabBtn('overdue', 'Overdue'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearch() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Container(
-        height: 42,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search',
-            prefixIcon: const Icon(Icons.search),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _tabBtn(String value, String label) {
+  Widget _buildTab(String value, String label) {
     final isActive = selectedTab == value;
+
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() => selectedTab = value),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          height: 45,
           decoration: BoxDecoration(
             color: isActive ? AppColors.primary : Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.primary),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isActive ? AppColors.primary : Colors.grey[300]!,
+              width: 1.5,
+            ),
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: isActive ? Colors.white : AppColors.primary,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
+                color: isActive ? Colors.white : AppColors.primary,
               ),
             ),
           ),
@@ -161,8 +190,9 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
     );
   }
 
-  Widget _returnCard(Map item) {
+  Widget _buildReturnCard(Map item) {
     final loan = item['peminjaman_barang'];
+    final String userName = loan?['NamaUser']?.toString() ?? 'Unknown User';
 
     return GestureDetector(
       onTap: () {
@@ -175,71 +205,38 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
         ).then((_) => setState(() {}));
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.10),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loan?['UserPeminjam'] ?? 'User',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    loan?['NamaAlat'] ?? '',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _statusColor(item['Status']).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
               child: Text(
-                item['Status'],
-                style: TextStyle(
-                  fontSize: 11,
+                userName,
+                style: const TextStyle(
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: _statusColor(item['Status']),
+                  color: Colors.black87,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: AppColors.primary),
+            Icon(Icons.chevron_right, color: AppColors.primary, size: 30),
           ],
         ),
       ),
     );
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'returned':
-        return Colors.green;
-      case 'overdue':
-        return Colors.red;
-      default:
-        return AppColors.primary;
-    }
   }
 }

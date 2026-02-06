@@ -17,9 +17,8 @@ int returnedTodayCount = 0;
 class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
   final supabase = Supabase.instance.client;
 
-  String getImageUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    return supabase.storage.from('products').getPublicUrl(path);
+  String getImageUrl(String? url) {
+    return url ?? '';
   }
 
   Future<List<dynamic>> _fetchPendingLoans() async {
@@ -266,31 +265,23 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
         children: [
           // IMAGE
           Container(
-            width: 55,
-            height: 40,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               color: Colors.grey.shade200,
             ),
-            child: Container(
-              width: 55,
-              height: 40,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.grey.shade200,
-              ),
-              child: imagePath != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        getImageUrl(imagePath),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.broken_image),
-                      ),
-                    )
-                  : const Icon(Icons.inventory_2, size: 22),
-            ),
+            child: imagePath != null && imagePath.toString().isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      getImageUrl(imagePath),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.broken_image),
+                    ),
+                  )
+                : const Icon(Icons.inventory_2, size: 22),
           ),
           const SizedBox(width: 12),
 

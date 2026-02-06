@@ -13,9 +13,8 @@ class _LoanManagementPageState extends State<LoanManagementPage> {
   final supabase = Supabase.instance.client;
   final TextEditingController _searchController = TextEditingController();
 
-  String getImageUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    return supabase.storage.from('products').getPublicUrl(path);
+  String getImageUrl(String? url) {
+    return url ?? '';
   }
 
   String selectedTab = 'pending';
@@ -192,7 +191,7 @@ class _LoanManagementPageState extends State<LoanManagementPage> {
   // ================= DASHBOARD APPROVAL CARD STYLE =================
 
   Widget _approvalCard(Map loan) {
-    final imagePath = loan['alat']?['FotoBarang'];
+    final imageUrl = loan['alat']?['FotoBarang'];
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
@@ -218,12 +217,13 @@ class _LoanManagementPageState extends State<LoanManagementPage> {
               borderRadius: BorderRadius.circular(8),
               color: Colors.grey.shade200,
             ),
-            child: imagePath != null
+            child: imageUrl != null && imageUrl.toString().isNotEmpty
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: Image.network(
-                      getImageUrl(imagePath),
+                      imageUrl,
                       fit: BoxFit.cover,
+                      errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
                     ),
                   )
                 : const Icon(Icons.inventory_2),

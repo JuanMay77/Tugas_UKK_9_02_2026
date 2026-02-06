@@ -29,6 +29,13 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
   void initState() {
     super.initState();
 
+    if (widget.returnData != null) {
+      overdueController.text =
+          widget.returnData!['Terlambat']?.toString() ?? '0';
+
+      feeController.text = widget.returnData!['Denda']?.toString() ?? '0';
+    }
+
     overdueController.addListener(() {
       final days = int.tryParse(overdueController.text) ?? 0;
       final total = days * dendaPerHari;
@@ -37,6 +44,10 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
   }
 
   Future<void> _submitReturn() async {
+    final status = widget.returnData?['Status'] ?? '';
+    if (status == 'returned' || status == 'overdue') {
+      return;
+    }
     final int overdueDays = int.tryParse(overdueController.text) ?? 0;
     final int fee = overdueDays * dendaPerHari;
 
@@ -86,6 +97,9 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
   @override
   Widget build(BuildContext context) {
     final loan = widget.loan;
+    final String status = widget.returnData?['Status'] ?? '';
+
+    final bool isFinished = status == 'returned' || status == 'overdue';
 
     return Scaffold(
       body: SafeArea(
@@ -97,38 +111,43 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    _fieldCard('Name', loan['UserPeminjam']),
+                    _fieldCard('Name', loan['NamaUser']?.toString() ?? '-'),
                     _fieldCard('Product', loan['NamaAlat']),
                     _fieldCard('Amount', loan['BanyakBarang'].toString()),
                     _fieldCard('Loan Date', loan['TanggalPinjam']),
                     _fieldCard('Return Date', loan['TanggalKembali'] ?? '-'),
 
-                    _inputCard('Overdue (Days)', overdueController),
+                    _inputCard(
+                      'Overdue (Days)',
+                      overdueController,
+                      enabled: !isFinished,
+                    ),
                     _inputCard('Fee (Auto)', feeController, enabled: false),
 
                     const SizedBox(height: 28),
 
-                    SizedBox(
-                      width: 160,
-                      height: 42,
-                      child: ElevatedButton(
-                        onPressed: _submitReturn,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(22),
+                    if (!isFinished)
+                      SizedBox(
+                        width: 160,
+                        height: 42,
+                        child: ElevatedButton(
+                          onPressed: _submitReturn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            elevation: 6,
                           ),
-                          elevation: 6,
-                        ),
-                        child: const Text(
-                          'Submit Return',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
+                          child: const Text(
+                            'Submit Return',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),

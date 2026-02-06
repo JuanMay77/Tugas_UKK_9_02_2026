@@ -17,10 +17,15 @@ int returnedTodayCount = 0;
 class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
   final supabase = Supabase.instance.client;
 
+  String getImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    return supabase.storage.from('products').getPublicUrl(path);
+  }
+
   Future<List<dynamic>> _fetchPendingLoans() async {
     return await supabase
         .from('peminjaman_barang')
-        .select()
+        .select('*, alat(FotoBarang)')
         .eq('Status', 'pending')
         .order('TanggalPinjam', ascending: false);
   }
@@ -241,6 +246,7 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
   // ================= APPROVAL CARD =================
 
   Widget _approvalCard(Map loan) {
+    final imagePath = loan['alat']?['FotoBarang'];
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(10),
@@ -266,7 +272,25 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
               borderRadius: BorderRadius.circular(8),
               color: Colors.grey.shade200,
             ),
-            child: const Icon(Icons.inventory_2, size: 22),
+            child: Container(
+              width: 55,
+              height: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey.shade200,
+              ),
+              child: imagePath != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        getImageUrl(imagePath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.broken_image),
+                      ),
+                    )
+                  : const Icon(Icons.inventory_2, size: 22),
+            ),
           ),
           const SizedBox(width: 12),
 

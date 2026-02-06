@@ -19,7 +19,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final res = await supabase
         .from('peminjaman_barang')
-        .select()
+        .select('*, pengembalian_barang(Denda)')
         .eq('UserPeminjam', user.id)
         .order('TanggalPinjam', ascending: false);
 
@@ -102,6 +102,14 @@ class _HistoryPageState extends State<HistoryPage> {
 
     final statusUI = _mapStatus(status);
 
+    int lateFee = 0;
+    final pengembalian = item['pengembalian_barang'];
+    if (pengembalian is List && pengembalian.isNotEmpty) {
+      lateFee = pengembalian.first['Denda'] ?? 0;
+    } else if (pengembalian is Map) {
+      lateFee = pengembalian['Denda'] ?? 0;
+    }
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -109,11 +117,7 @@ class _HistoryPageState extends State<HistoryPage> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.shade300, width: 2),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -137,6 +141,17 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 const SizedBox(height: 2),
                 Text('Amount: $amount', style: const TextStyle(fontSize: 12)),
+                if (status == 'overdue') ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Late Fee: Rp $lateFee',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

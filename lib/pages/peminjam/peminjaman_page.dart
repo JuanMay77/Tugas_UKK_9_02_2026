@@ -105,9 +105,18 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
     setState(() => isSubmitting = true);
 
     try {
+      final profile = await supabase
+          .from('users')
+          .select('Nama')
+          .eq('id', user.id)
+          .single();
+
+      final String namaUser = profile['Nama'];
+
       await supabase.from('peminjaman_barang').insert({
         'Alat_ID': widget.alatId,
         'UserPeminjam': user.id,
+        'NamaUser': namaUser,
         'NamaAlat': widget.name,
         'TanggalPinjam': loanDateController.text,
         'TanggalKembali': returnDateController.text,

@@ -16,6 +16,107 @@ int returnedTodayCount = 0;
 
 class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
   final supabase = Supabase.instance.client;
+  final TextEditingController _rejectReasonCtrl = TextEditingController();
+
+  void _showRejectDialog(Map loan) {
+    _rejectReasonCtrl.clear();
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // HEADER
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Center(
+                    child: const Text(
+                      'Rejection Reason',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // TEXTFIELD
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _rejectReasonCtrl,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Enter the reason for rejection...',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // SUBMIT BUTTON
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final reason = _rejectReasonCtrl.text.trim();
+
+                    if (reason.isEmpty) {
+                      _showSnack('Please enter rejection reason');
+                      return;
+                    }
+
+                    Navigator.pop(context);
+                    await _rejectLoan(loan, reason);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   String getImageUrl(String? url) {
     return url ?? '';
@@ -27,6 +128,22 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
         .select('*, alat(FotoBarang)')
         .eq('Status', 'pending')
         .order('TanggalPinjam', ascending: false);
+  }
+
+  Future<void> _rejectLoan(Map loan, String reason) async {
+    try {
+      await supabase
+          .from('peminjaman_barang')
+          .update({'Status': 'rejected', 'AlasanPenolakan': reason})
+          .eq('Peminjaman_ID', loan['Peminjaman_ID']);
+
+      await _fetchStats();
+      setState(() {});
+
+      _showSnack('Loan rejected');
+    } catch (e) {
+      _showSnack('Failed to reject: $e');
+    }
   }
 
   Future<void> _fetchStats() async {
@@ -316,7 +433,7 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
             children: [
               _smallPrimaryBtn('Yes', () => _showApproveDialog(loan)),
               const SizedBox(height: 12, width: 10),
-              _smallOutlineBtn('No', () {}),
+              _smallOutlineBtn('No', () => _showRejectDialog(loan)),
             ],
           ),
         ],
@@ -401,21 +518,61 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Approve Loan'),
-        content: Text(
-          'Approve loan for "${loan['NamaAlat']}"?\n\nAmount: ${loan['BanyakBarang']}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('No'),
+        backgroundColor: Colors.white,
+        title: const Center(
+          child: Text(
+            'Approve Loan',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w700,
+              fontSize: 28,
+            ),
           ),
+        ),
+
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('Approve loan for', textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text(
+              '"${loan['NamaAlat']}"',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Amount: ${loan['BanyakBarang']}',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+
+        actionsAlignment: MainAxisAlignment.center,
+
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.primary),
+              minimumSize: const Size(90, 40),
+            ),
+            child: const Text('No', style: TextStyle(color: AppColors.primary)),
+          ),
+
+          const SizedBox(width: 12),
+
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _approveLoan(loan);
             },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              minimumSize: const Size(90, 40),
+            ),
             child: const Text('Yes', style: TextStyle(color: Colors.white)),
           ),
         ],

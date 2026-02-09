@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/pages/auth/login_page.dart';
 import 'package:flutter_application_1/pages/peminjam/edit_profile_page.dart';
+import 'package:flutter_application_1/pages/petugas/daily_report.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/app_colors.dart';
 
@@ -96,6 +97,73 @@ class _ProfilePageState extends State<ProfilePetugasPage> {
                 SizedBox(width: 10),
                 Text(
                   'Edit Profile',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _reportdayButton() {
+    return Container(
+      width: double.infinity,
+      height: 52,
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFC6D1E3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.20),
+            blurRadius: 14,
+            spreadRadius: 1,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () async {
+            final supabase = Supabase.instance.client;
+
+            final today = DateTime.now();
+            final startOfDay = DateTime(today.year, today.month, today.day);
+            final endOfDay = startOfDay.add(const Duration(days: 1));
+
+            final loans = await supabase
+                .from('peminjaman_barang')
+                .select()
+                .gte('TanggalPinjam', startOfDay.toIso8601String())
+                .lt('TanggalPinjam', endOfDay.toIso8601String());
+
+            final returns = await supabase
+                .from('pengembalian_barang')
+                .select('*, peminjaman_barang(NamaAlat, BanyakBarang)')
+                .gte('created_at', startOfDay.toIso8601String())
+                .lt('created_at', endOfDay.toIso8601String());
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ReportPage(loans: loans, returns: returns),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: const [
+                Icon(Icons.report_problem, size: 20),
+                SizedBox(width: 10),
+                Text(
+                  'Daily Loan & Return Reports',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ],
@@ -316,7 +384,12 @@ class _ProfilePageState extends State<ProfilePetugasPage> {
                               topRight: Radius.circular(40),
                             ),
                           ),
-                          child: Column(children: [_editProfileButton()]),
+                          child: Column(
+                            children: [
+                              _editProfileButton(),
+                              _reportdayButton(),
+                            ],
+                          ),
                         ),
                       ),
                     ],

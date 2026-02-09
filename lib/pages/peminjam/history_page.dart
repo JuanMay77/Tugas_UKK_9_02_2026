@@ -100,6 +100,7 @@ class _HistoryPageState extends State<HistoryPage> {
     final int amount = item['BanyakBarang'] ?? 0;
     final String name = item['NamaAlat'] ?? '-';
     final String deadline = item['TanggalKembali'] ?? '-';
+    final String rejectReason = item['AlasanPenolakan'] ?? '';
 
     final statusUI = _mapStatus(status);
 
@@ -146,6 +147,19 @@ class _HistoryPageState extends State<HistoryPage> {
                   const SizedBox(height: 4),
                   Text(
                     'Late Fee: Rp $lateFee',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+
+                // REJECTION REASON
+                if (status == 'rejected' && rejectReason.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Reason: $rejectReason',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

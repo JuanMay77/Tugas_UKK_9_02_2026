@@ -102,6 +102,7 @@ class _DetailReturnPagePetugasState extends State<DetailReturnPagePetugas> {
     final bool isFinished = status == 'returned' || status == 'overdue';
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [

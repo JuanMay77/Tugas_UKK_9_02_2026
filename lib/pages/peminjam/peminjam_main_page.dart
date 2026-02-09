@@ -27,6 +27,7 @@ class _PeminjamMainPageState extends State<PeminjamMainPage> {
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         currentIndex: _currentIndex,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.grey,

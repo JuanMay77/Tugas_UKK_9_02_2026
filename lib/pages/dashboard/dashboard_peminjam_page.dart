@@ -237,7 +237,7 @@ class _DashboardPeminjamPageState extends State<DashboardPeminjamPage> {
         }).toList();
 
         if (alatList.isEmpty) {
-          return const Center(child: Text('Tidak ada data alat'));
+          return const Center(child: Text('No product data'));
         }
 
         return GridView.builder(

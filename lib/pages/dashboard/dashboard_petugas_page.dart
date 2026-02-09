@@ -72,6 +72,7 @@ class _DashboardPetugasPageState extends State<DashboardPetugasPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

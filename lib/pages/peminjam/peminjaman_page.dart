@@ -430,7 +430,7 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: enabled ? Colors.black : Colors.black87, // <<< BIAR KELIHATAN
+          color: enabled ? Colors.black : Colors.black87,
         ),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.symmetric(

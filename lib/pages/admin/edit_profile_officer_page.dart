@@ -57,6 +57,7 @@ class _EditProfileAdminPageState extends State<EditProfileAdminPage> {
     try {
       await supabase.from('users').delete().eq('id', widget.officerId);
 
+      Navigator.pop(context, true);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Officer deleted successfully')),

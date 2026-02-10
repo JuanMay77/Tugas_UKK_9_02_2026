@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/pages/dashboard/dashboard_admin_page.dart';
+import 'package:flutter_application_1/pages/admin/admin_main_page.dart';
 import 'package:flutter_application_1/pages/peminjam/peminjam_main_page.dart';
 import 'package:flutter_application_1/pages/petugas/petugas_main_page.dart';
 import '../../core/constants/app_colors.dart';
@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
     if (role == 'Admin') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardAdminPage()),
+        MaterialPageRoute(builder: (_) => const AdminMainPage()),
       );
     } else if (role == 'Officer') {
       Navigator.pushReplacement(

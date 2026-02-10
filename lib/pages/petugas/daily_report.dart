@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'dart:html' as html;
 import '../../core/constants/app_colors.dart';
+import 'dart:html' as html;
 
 class ReportPage extends StatelessWidget {
   final List loans;
@@ -43,9 +43,9 @@ class ReportPage extends StatelessWidget {
               pw.Text('Returns Today', style: pw.TextStyle(fontSize: 16)),
               pw.SizedBox(height: 8),
               ...returns.map((r) {
-                final pengembalian = r['pengembalian_barang'];
+                final peminjaman = r['peminjaman_barang'];
                 return pw.Text(
-                  '- ${pengembalian?['NamaAlat'] ?? '-'} | Qty: ${pengembalian?['BanyakBarang'] ?? '-'}',
+                  '- ${peminjaman?['NamaAlat'] ?? '-'} | Qty: ${peminjaman?['BanyakBarang'] ?? '-'}',
                 );
               }),
             ],
@@ -113,7 +113,7 @@ class ReportPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                // Download PDF di tengah kanan
+                // Download PDF
                 Align(
                   alignment: Alignment.centerRight,
                   child: FutureBuilder<Uint8List>(
@@ -204,12 +204,12 @@ class ReportPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 8),
                     ...returns.map((r) {
-                      final pengembalian = r['pengembalian_barang'];
+                      final peminjaman = r['peminjaman_barang'];
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         color: Colors.white,
@@ -221,9 +221,9 @@ class ReportPage extends StatelessWidget {
                           ),
                         ),
                         child: ListTile(
-                          title: Text(r['NamaAlat']),
+                          title: Text(peminjaman?['NamaAlat'] ?? '-'),
                           subtitle: Text(
-                            'Qty: ${r['BanyakBarang']} | Status: ${r['Status']}',
+                            'Qty: ${peminjaman?['BanyakBarang'] ?? '-'} | Denda: ${r['Denda'] ?? 0}',
                           ),
                         ),
                       );

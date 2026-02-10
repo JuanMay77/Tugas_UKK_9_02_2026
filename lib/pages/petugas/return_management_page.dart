@@ -137,7 +137,7 @@ class _ReturnManagementPageState extends State<ReturnManagementPage> {
                   if (data.isEmpty) {
                     return const Center(
                       child: Text(
-                        'No returns found',
+                        'No items have been borrowed yet',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     );

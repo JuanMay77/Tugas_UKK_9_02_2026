@@ -106,6 +106,57 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
     );
   }
 
+  Widget _menuBox({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: const Color(0xFFC6D1E3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.white,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Icon(icon, size: 22),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.chevron_right),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showExitDialog() {
     showDialog(
       context: context,
@@ -315,7 +366,40 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                               topRight: Radius.circular(40),
                             ),
                           ),
-                          child: Column(children: [_editProfileButton()]),
+                          child: Column(
+                            children: [
+                              _editProfileButton(),
+                              const SizedBox(height: 16),
+
+                              _menuBox(
+                                icon: Icons.assignment,
+                                title: 'Peminjaman Management',
+                                onTap: () {
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (_) =>
+                                  //         const LoanManagementPage(),
+                                  //   ),
+                                  // );
+                                },
+                              ),
+
+                              _menuBox(
+                                icon: Icons.assignment_return,
+                                title: 'Pengembalian Management',
+                                onTap: () {
+                                  // Navigator.push(
+                                  //   context,
+                                  //   MaterialPageRoute(
+                                  //     builder: (_) =>
+                                  //         const ReturnManagementPage(),
+                                  //   ),
+                                  // );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

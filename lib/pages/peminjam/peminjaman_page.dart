@@ -126,6 +126,12 @@ class _PeminjamanPageState extends State<PeminjamanPage> {
         'BanyakBarang': amount,
       });
 
+      await supabase.from('log_aktivitas').insert({
+      'UserID': user.id,
+      'NamaUser': namaUser,
+      'Aktivitas': 'peminjaman barang',
+    });
+
       _showSnack('Peminjaman berhasil disubmit');
       Navigator.pop(context);
     } catch (e) {

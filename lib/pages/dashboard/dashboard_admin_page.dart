@@ -131,20 +131,19 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
   }
 
   Future<void> _rejectLoan(Map loan, String reason) async {
-    try {
-      await supabase
-          .from('peminjaman_barang')
-          .update({'Status': 'rejected', 'AlasanPenolakan': reason})
-          .eq('Peminjaman_ID', loan['Peminjaman_ID']);
+  try {
+    await supabase
+        .from('peminjaman_barang')
+        .update({'Status': 'rejected', 'AlasanPenolakan': reason})
+        .eq('Peminjaman_ID', loan['Peminjaman_ID']);  
 
-      await _fetchStats();
-      setState(() {});
-
-      _showSnack('Loan rejected');
-    } catch (e) {
-      _showSnack('Failed to reject: $e');
-    }
+    await _fetchStats();
+    setState(() {});
+    _showSnack('Peminjaman ditolak');
+  } catch (e) {
+    _showSnack('Gagal menolak: $e');
   }
+}
 
   Future<void> _fetchStats() async {
     final today = DateTime.now().toIso8601String().substring(0, 10);
@@ -178,13 +177,139 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
     });
   }
 
+  // ── BARU: Ambil data log aktivitas ────────────────────────────────
+  Future<List<dynamic>> _fetchActivityLog() async {
+    return await supabase
+        .from('log_aktivitas')
+        .select('Log_ID, UserID, Aktivitas, TanggalAktivitas, NamaUser')
+        .order('TanggalAktivitas', ascending: false)
+        .limit(15);
+  }
+
+  // ── BARU: Format waktu relatif (baru saja, 5 menit lalu, dst) ─────
+  String _formatWaktu(String timestamp) {
+    try {
+      final date = DateTime.parse(timestamp).toLocal();
+      final now = DateTime.now();
+      final difference = now.difference(date);
+
+      if (difference.inDays > 0) {
+        return '${difference.inDays} hari yang lalu';
+      } else if (difference.inHours > 0) {
+        return '${difference.inHours} jam yang lalu';
+      } else if (difference.inMinutes > 0) {
+        return '${difference.inMinutes} menit yang lalu';
+      } else {
+        return 'baru saja';
+      }
+    } catch (e) {
+      return timestamp;
+    }
+  }
+
+  // ── BARU: Kartu setiap aktivitas ──────────────────────────────────
+  Widget _kartuAktivitas(Map activity) {
+    final String aksi = activity['Aktivitas'] ?? 'Aksi tidak diketahui';
+    final String nama = activity['NamaUser'] ?? 'Pengguna tidak diketahui';
+    final String waktu = activity['TanggalAktivitas'] != null
+        ? _formatWaktu(activity['TanggalAktivitas'])
+        : '—';
+
+    if (aksi.toLowerCase().contains('pinjam') ||
+        aksi.toLowerCase().contains('peminjaman')) {
+    } else if (aksi.toLowerCase().contains('kembali') ||
+        aksi.toLowerCase().contains('return')) {
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  aksi,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'oleh $nama',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            waktu,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── BARU: Daftar log aktivitas ────────────────────────────────────
+  Widget _daftarLogAktivitas() {
+    return FutureBuilder<List<dynamic>>(
+      future: _fetchActivityLog(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('Failed to load log: ${snapshot.error}'),
+          );
+        }
+
+        final aktivitas = snapshot.data ?? [];
+
+        if (aktivitas.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'There is no recent activity yet',
+              style: TextStyle(fontSize: 15, color: Colors.grey),
+            ),
+          );
+        }
+
+        return Column(
+          children: aktivitas.map((act) => _kartuAktivitas(act)).toList(),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     _fetchStats();
   }
-
-  // ================= UI =================
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +333,19 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
               ),
               const SizedBox(height: 12),
               _approvalList(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
+
+              // ── BAGIAN BARU: LOG AKTIVITAS ────────────────────────────────
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  'Log Aktivitas',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _daftarLogAktivitas(),
+              const SizedBox(height: 40),
             ],
           ),
         ),
@@ -221,13 +358,11 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
   Widget _header() {
     return Column(
       children: [
-        // APPBAR 
+        // APPBAR
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(10, 28, 20, 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-          ),
+          decoration: BoxDecoration(color: Colors.white),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -269,7 +404,11 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
                 const SizedBox(width: 10),
                 const Text(
                   'Welcome Admin',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
                 ),
               ],
             ),
@@ -307,7 +446,9 @@ class _DashboardAdminPageState extends State<DashboardAdminPage> {
       decoration: BoxDecoration(
         color: filled ? AppColors.primary : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: filled ? null : Border.all(color: Colors.grey.shade300, width: 3),
+        border: filled
+            ? null
+            : Border.all(color: Colors.grey.shade300, width: 3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.10),

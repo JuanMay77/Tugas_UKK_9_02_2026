@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/pages/admin/peminjaman_management_admin_page.dart';
+import 'package:flutter_application_1/pages/admin/pengembalian_management_admin_page.dart';
 import 'package:flutter_application_1/pages/auth/login_page.dart';
 import 'package:flutter_application_1/pages/peminjam/edit_profile_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -373,15 +375,15 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
 
                               _menuBox(
                                 icon: Icons.assignment,
-                                title: 'Peminjaman Management',
+                                title: 'Loan Management',
                                 onTap: () {
-                                  // Navigator.push(
-                                  //   context,
-                                  //   MaterialPageRoute(
-                                  //     builder: (_) =>
-                                  //         const LoanManagementPage(),
-                                  //   ),
-                                  // );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const LoanManagementAdminPage(),
+                                    ),
+                                  );
                                 },
                               ),
 
@@ -389,13 +391,13 @@ class _ProfileAdminPageState extends State<ProfileAdminPage> {
                                 icon: Icons.assignment_return,
                                 title: 'Pengembalian Management',
                                 onTap: () {
-                                  // Navigator.push(
-                                  //   context,
-                                  //   MaterialPageRoute(
-                                  //     builder: (_) =>
-                                  //         const ReturnManagementPage(),
-                                  //   ),
-                                  // );
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const ReturnManagementAdminPage(),
+                                    ),
+                                  );
                                 },
                               ),
                             ],
